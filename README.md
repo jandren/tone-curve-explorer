@@ -10,5 +10,5 @@ Hope you find it useful, PRs are welcome!
 ```
 git clone https://github.com/jandren/tone-curve-explorer.git
 pip install -r requirements.txt
-streamlit run stream_app.py
+streamlit run streamlit_app.py
 ```
