@@ -2,3 +2,4 @@ streamlit >= 0.75.0
 numpy >= 1.19.2
 pandas >= 1.1.5
 matplotlib >= 3.3.2
+scipy >= 1.6.0
