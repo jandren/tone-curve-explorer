@@ -40,6 +40,8 @@ filmic_settings.display_white = display_white
 
 # Ask if Base Curve should be displayed
 show_base_curve = st.sidebar.checkbox('Show average basecurve', value=True)
+show_aces_srgb = st.sidebar.checkbox('Show ACES sRGB 100 nits', value=True)
+show_aces_hlg = st.sidebar.checkbox('Show ACES HLG 1000 nits', value=False)
 
 ### Calculations
 # Setup x axis for the plots
@@ -102,6 +104,21 @@ if show_base_curve:
     base_slope = derivative(intensity_x_axis, base_display)
     value_plot["Average Base Curve"] = base_display
     slope_plot["Average Base Curve"] = base_slope
+
+if show_aces_srgb or show_aces_hlg:
+    aces = tonecurves.Aces()
+
+if show_aces_srgb:
+    aces_srgb_display = aces.apply_srgb(intensity_x_axis)
+    aces_srgb_slope = derivative(intensity_x_axis, aces_srgb_display)
+    value_plot["ACES sRGB"] = aces_srgb_display
+    slope_plot["ACES sRGB"] = aces_srgb_slope
+
+if show_aces_hlg:
+    aces_hlg_display = aces.apply_hlg(intensity_x_axis)
+    aces_hlg_slope = derivative(intensity_x_axis, aces_hlg_display)
+    value_plot["ACES HLG"] = aces_hlg_display
+    slope_plot["ACES HLG"] = aces_hlg_slope
 
 ### Main window stuff
 st.title("Tone Curve Playground")
