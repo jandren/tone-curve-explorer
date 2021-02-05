@@ -42,6 +42,8 @@ filmic_settings.display_white = display_white
 show_base_curve = st.sidebar.checkbox('Show average basecurve', value=True)
 show_aces_srgb = st.sidebar.checkbox('Show ACES sRGB 100 nits', value=True)
 show_aces_hlg = st.sidebar.checkbox('Show ACES HLG 1000 nits', value=False)
+blender_names = ['None', 'Very Low Contrast', 'Low Contrast', 'Medium Low Contrast', "Medium Contrast", "Medium High Contrast", "High Contrast", "Very High Contrast"]
+show_blender_filmic = st.sidebar.selectbox("Show Blender Filmic Curve", blender_names)
 
 ### Calculations
 # Setup x axis for the plots
@@ -105,6 +107,7 @@ if show_base_curve:
     value_plot["Average Base Curve"] = base_display
     slope_plot["Average Base Curve"] = base_slope
 
+# Add aces curve if requested
 if show_aces_srgb or show_aces_hlg:
     aces = tonecurves.Aces()
 
@@ -119,6 +122,19 @@ if show_aces_hlg:
     aces_hlg_slope = derivative(intensity_x_axis, aces_hlg_display)
     value_plot["ACES HLG"] = aces_hlg_display
     slope_plot["ACES HLG"] = aces_hlg_slope
+
+# Add Blender filmic curve if requested
+@st.cache
+def get_blender_curve(curve_name):
+    blender = tonecurves.Blender()
+    return blender.apply(intensity_x_axis, curve_name)
+
+if not show_blender_filmic == "None":
+    blender_display = get_blender_curve(show_blender_filmic)
+    blender_slope = derivative(intensity_x_axis, blender_display)
+    value_plot[show_blender_filmic] = blender_display
+    slope_plot[show_blender_filmic] = blender_slope
+
 
 ### Main window stuff
 st.title("Tone Curve Playground")
