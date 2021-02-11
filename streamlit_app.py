@@ -16,7 +16,8 @@ display_white = st.sidebar.slider("Target White Luminance", 0.2, 16.0, 1.0)
 
 st.sidebar.header("Log-Logistic Settings")
 loglogistic_settings = tonecurves.LogLogisticSettings()
-loglogistic_settings.contrast = st.sidebar.slider("Contrast", 0.8, 3.0, loglogistic_settings.contrast)
+loglogistic_settings.contrast = st.sidebar.slider("Contrast", 0.5, 5.0, loglogistic_settings.contrast)
+loglogistic_settings.skew = st.sidebar.slider("Skew", -1.0, 1.0, loglogistic_settings.skew)
 loglogistic_settings.display_white = display_white
 loglogistic_settings.display_black = display_black
 
