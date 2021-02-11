@@ -1,6 +1,6 @@
 from .basecurve import BaseCurve
 from .filmic import Filmic, FilmicSettings
-from .loglogistic import LogLogistic, LogLogisticSettings
+from .loglogistic import LogLogistic
 from .doublelogistic import DoubleLogistic
 from .aces import Aces
 from .blender import Blender

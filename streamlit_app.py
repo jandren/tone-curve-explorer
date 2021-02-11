@@ -19,11 +19,13 @@ display_black = st.sidebar.slider("Target Black Luminance", 0.0, 0.18, 0.0)
 display_white = st.sidebar.slider("Target White Luminance", 0.2, 16.0, 1.0)
 
 st.sidebar.header("Log-Logistic Settings")
-loglogistic_settings = tonecurves.LogLogisticSettings()
-loglogistic_settings.contrast = st.sidebar.slider("Contrast", 0.5, 5.0, loglogistic_settings.contrast)
-loglogistic_settings.skew = st.sidebar.slider("Skew", -1.0, 1.0, loglogistic_settings.skew)
-loglogistic_settings.display_white = display_white
-loglogistic_settings.display_black = display_black
+loglogistic = tonecurves.LogLogistic()
+loglogistic.enable = st.sidebar.checkbox('Show Log-Logistic', value=True)
+if loglogistic.enable:
+    loglogistic.contrast = st.sidebar.slider("Contrast", 0.5, 5.0, loglogistic.contrast)
+    loglogistic.skew = st.sidebar.slider("Skew", -1.0, 1.0, loglogistic.skew)
+    loglogistic.display_white = display_white
+    loglogistic.display_black = display_black
 
 st.sidebar.header("Filmic Settings")
 filmic_settings = tonecurves.FilmicSettings()
@@ -84,13 +86,13 @@ def derivative(x, y):
     return dydx
 
 # Add Loglogistic to the DataFrame
-loglogistic = tonecurves.LogLogistic()
-loglogistic_value = loglogistic.apply(intensity_x_axis, loglogistic_settings)
-if view_mode == "Log2Log2":
-    loglogistic_value = np.log2(loglogistic_value + log_epsilon)
-loglogistic_slope = derivative(dydx_x_axis, loglogistic_value)
-value_plot["LogLogistic"] = loglogistic_value
-slope_plot["LogLogistic"] = loglogistic_slope
+if loglogistic.enable:
+    loglogistic_value = loglogistic.apply(intensity_x_axis)
+    if view_mode == "Log2Log2":
+        loglogistic_value = np.log2(loglogistic_value + log_epsilon)
+    loglogistic_slope = derivative(dydx_x_axis, loglogistic_value)
+    value_plot["LogLogistic"] = loglogistic_value
+    slope_plot["LogLogistic"] = loglogistic_slope
 
 # Add Filmic to the DataFrame
 filmic = tonecurves.Filmic()

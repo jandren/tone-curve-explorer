@@ -1,7 +1,6 @@
 import numpy as np
 
-
-class LogLogisticSettings(object):
+class LogLogistic(object):
     def __init__(self):
         self.scene_grey = 0.1845
         self.display_black = 0.0
@@ -10,24 +9,19 @@ class LogLogisticSettings(object):
         self.contrast = 1.65
         self.skew = 0.0
 
+    def __settings(self):
+        self.power = self.contrast
+        self.skew_power = pow(5.0, -self.skew)
 
-class LogLogistic(object):
-    def __init__(self):
-        pass
-
-    def __transfer_settings(self, settings):
-        self.power = settings.contrast
-        self.skew = pow(5.0, -settings.skew)
-
-        self.magnitude = settings.display_white
-        T = pow(settings.display_white / settings.display_grey, 1.0 / self.skew) - 1.0
-        if settings.display_black > 0.0:
-            z = pow(settings.display_white / settings.display_black, 1.0 / self.skew) - 1.0
-            self.fog = settings.scene_grey * pow(T, 1.0 / self.power) / (pow(z, 1.0 / self.power) - pow(T, 1.0 / self.power))
+        self.magnitude = self.display_white
+        T = pow(self.display_white / self.display_grey, 1.0 / self.skew_power) - 1.0
+        if self.display_black > 0.0:
+            z = pow(self.display_white / self.display_black, 1.0 / self.skew_power) - 1.0
+            self.fog = self.scene_grey * pow(T, 1.0 / self.power) / (pow(z, 1.0 / self.power) - pow(T, 1.0 / self.power))
         else:
             self.fog = 0.0
-        self.paper_e = pow(self.fog + settings.scene_grey, self.power) * T        
+        self.paper_e = pow(self.fog + self.scene_grey, self.power) * T        
 
-    def apply(self, x, settings):
-        self.__transfer_settings(settings)
-        return self.magnitude * pow(1.0 + self.paper_e * pow(self.fog + x, -self.power), -self.skew)
+    def apply(self, x):
+        self.__settings()
+        return self.magnitude * pow(1.0 + self.paper_e * pow(self.fog + x, -self.power), -self.skew_power)
