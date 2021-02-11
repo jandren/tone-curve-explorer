@@ -1,5 +1,5 @@
 from .basecurve import BaseCurve
-from .filmic import Filmic, FilmicSettings
+from .filmic import Filmic
 from .loglogistic import LogLogistic
 from .doublelogistic import DoubleLogistic
 from .aces import Aces

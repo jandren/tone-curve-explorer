@@ -28,23 +28,26 @@ if loglogistic.enable:
     loglogistic.display_black = display_black
 
 st.sidebar.header("Filmic Settings")
-filmic_settings = tonecurves.FilmicSettings()
-filmic_settings.scene_white = st.sidebar.slider("White Relative Exposure", 2.0, 8.0, filmic_settings.scene_white)
-filmic_settings.scene_black = st.sidebar.slider("Black Relative Exposure", -14.0, -3.0, filmic_settings.scene_black)
-filmic_settings.contrast = st.sidebar.slider("Contrast", 1.0, 2.0, filmic_settings.contrast)
+filmic = tonecurves.Filmic()
+filmic.enable = st.sidebar.checkbox('Show Filmic', value=True)
+if filmic.enable:
+    filmic.scene_white = st.sidebar.slider("White Relative Exposure", 2.0, 8.0, filmic.scene_white)
+    filmic.scene_black = st.sidebar.slider("Black Relative Exposure", -14.0, -3.0, filmic.scene_black)
+    filmic.contrast = st.sidebar.slider("Contrast", 1.0, 2.0, filmic.contrast)
 
-if st.sidebar.checkbox('Auto Adjust Hardness', value=True):
-    filmic_settings.hardness = np.log(filmic_settings.display_grey) / np.log(-filmic_settings.scene_black / (filmic_settings.scene_white - filmic_settings.scene_black))
-    st.sidebar.code(str(filmic_settings.hardness))
-else:
-    filmic_settings.hardness = st.sidebar.slider("Hardness", 1.0, 10.0, filmic_settings.hardness)
-    
+    if st.sidebar.checkbox('Auto Adjust Hardness', value=True):
+        filmic.hardness = np.log(filmic.display_grey) / np.log(-filmic.scene_black / (filmic.scene_white - filmic.scene_black))
+        st.sidebar.code(str(filmic.hardness))
+    else:
+        filmic.hardness = st.sidebar.slider("Hardness", 1.0, 10.0, filmic.hardness)
+        
 
-filmic_settings.latitude = st.sidebar.slider("Latitude", 5.0, 50.0, 100.0*filmic_settings.latitude) / 100.0
-filmic_settings.balance = st.sidebar.slider("Shadows/Highlights Balance", -50.0, 50.0, 100.0*filmic_settings.balance) / 100.0
-filmic_settings.display_black = display_black
-filmic_settings.display_white = display_white
+    filmic.latitude = st.sidebar.slider("Latitude", 5.0, 50.0, 100.0*filmic.latitude) / 100.0
+    filmic.balance = st.sidebar.slider("Shadows/Highlights Balance", -50.0, 50.0, 100.0*filmic.balance) / 100.0
+    filmic.display_black = display_black
+    filmic.display_white = display_white
 
+st.sidebar.header("Other Curves")
 # Double Logistic
 double_logistic = tonecurves.DoubleLogistic()
 double_logistic.enable = st.sidebar.checkbox('Show Double Logistic', value=False)
@@ -95,26 +98,26 @@ if loglogistic.enable:
     slope_plot["LogLogistic"] = loglogistic_slope
 
 # Add Filmic to the DataFrame
-filmic = tonecurves.Filmic()
-filmic_value = filmic.apply(intensity_x_axis, filmic_settings)
-if view_mode == "Log2Log2":
-    filmic_value = np.log2(filmic_value + log_epsilon)
-filmic_slope = derivative(dydx_x_axis, filmic_value)
-value_plot["Filmic"] = filmic_value
-slope_plot["Filmic"] = filmic_slope
+if filmic.enable:
+    filmic_value = filmic.apply(intensity_x_axis)
+    if view_mode == "Log2Log2":
+        filmic_value = np.log2(filmic_value + log_epsilon)
+    filmic_slope = derivative(dydx_x_axis, filmic_value)
+    value_plot["Filmic"] = filmic_value
+    slope_plot["Filmic"] = filmic_slope
 
-# For the filmic default view
-norm_x, pregamma_y = filmic.get_default_view(filmic_settings, view_resolution)
-filmic_plot = pd.DataFrame(index=norm_x)
-filmic_plot["Filmic"] = pregamma_y
+    # For the filmic default view
+    norm_x, pregamma_y = filmic.get_default_view(view_resolution)
+    filmic_plot = pd.DataFrame(index=norm_x)
+    filmic_plot["Filmic"] = pregamma_y
 
-darktable_filmic_fig = plt.figure("Filmic in darktable")
-plt.plot(norm_x, pregamma_y)
-plt.plot(0.0, filmic.display_black_gamma, 'o')
-plt.plot(filmic.toe_log, filmic.toe_display, 'o')
-plt.plot(filmic.grey_log, filmic.display_grey_gamma, 'o')
-plt.plot(filmic.shoulder_log, filmic.shoulder_display, 'o')
-plt.plot(1.0, filmic.display_white_gamma, 'o')
+    darktable_filmic_fig = plt.figure("Filmic in darktable")
+    plt.plot(norm_x, pregamma_y)
+    plt.plot(0.0, filmic.display_black_gamma, 'o')
+    plt.plot(filmic.toe_log, filmic.toe_display, 'o')
+    plt.plot(filmic.grey_log, filmic.display_grey_gamma, 'o')
+    plt.plot(filmic.shoulder_log, filmic.shoulder_display, 'o')
+    plt.plot(1.0, filmic.display_white_gamma, 'o')
 
 if double_logistic.enable:
     double_logistic_value = double_logistic.apply(intensity_x_axis)
@@ -233,8 +236,8 @@ a way of normalizer of middle grey which is a crucial part of expanding the spac
 The default darktable view is shown below for reference. Note that this view is on a normalized x axis
 mapping [black_point, white_point] -> [0, 1] and the y axis is shown as before the gamma curve is applied.""")
 
-#st.line_chart(filmic_plot)
-st.pyplot(darktable_filmic_fig)
+if filmic.enable:
+    st.pyplot(darktable_filmic_fig)
 st.subheader("Disclaimers")
 st.write("""
 The Filmic curve implementation is based on the documentation provided here:

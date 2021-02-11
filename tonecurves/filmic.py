@@ -1,7 +1,6 @@
 import numpy as np
 
-
-class FilmicSettings(object):
+class Filmic(object):
     def __init__(self):
         ### Settings
         self.scene_white = 4.0
@@ -17,25 +16,6 @@ class FilmicSettings(object):
         self.latitude = 0.25
         self.balance = 0.0
         self.hardness = 2.2
-
-class Filmic(object):
-    def __init__(self):
-        self.__transfer_settings(FilmicSettings())
-
-    def __transfer_settings(self, settings):
-        self.scene_white = settings.scene_white
-        self.scene_black = settings.scene_black
-
-        self.display_white = settings.display_white
-        self.display_black = settings.display_black
-        
-        self.scene_grey = settings.scene_grey
-        self.display_grey = settings.display_grey
-
-        self.contrast = settings.contrast
-        self.latitude = settings.latitude
-        self.balance = settings.balance
-        self.hardness = settings.hardness
 
     def __log_tonemapping_v2(self, x):
         dynamic_range = self.scene_white - self.scene_black
@@ -149,8 +129,7 @@ class Filmic(object):
         shoulder_b = np.array([self.display_white_gamma, 0., self.shoulder_display, self.contrast, 0. ])
         self.shoulder_poly = np.poly1d(np.linalg.solve(shoulder_A, shoulder_b))
 
-    def apply(self, x, settings):
-        self.__transfer_settings(settings)
+    def apply(self, x):
         self.__fit_splines()
         x_log = self.__log_tonemapping_v2(x)
         output = np.polyval(self.lat_poly, x_log)
@@ -168,7 +147,7 @@ class Filmic(object):
         display_slope[1:] = (display_value[1:] - display_value[:-1])# / (x[1:] - x[:-1])
         return display_value
     
-    def get_default_view(self, settings, n_points):
+    def get_default_view(self, n_points):
         grey_log = np.log2(self.scene_grey)
         x = pow(2.0, np.linspace(self.scene_black + grey_log, self.scene_white + grey_log, n_points))
         x_log = self.__log_tonemapping_v2(x)
