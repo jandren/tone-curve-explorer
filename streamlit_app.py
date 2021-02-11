@@ -43,6 +43,13 @@ filmic_settings.balance = st.sidebar.slider("Shadows/Highlights Balance", -50.0,
 filmic_settings.display_black = display_black
 filmic_settings.display_white = display_white
 
+# Double Logistic
+double_logistic = tonecurves.DoubleLogistic()
+double_logistic.enable = st.sidebar.checkbox('Show Double Logistic', value=False)
+if double_logistic.enable:
+    double_logistic.L = st.sidebar.slider("L", 0.0, 2.0, 0.1845)
+    double_logistic.c = st.sidebar.slider("c", 1.0, 10.0, 2.0)
+
 # Ask if Base Curve should be displayed
 show_base_curve = st.sidebar.checkbox('Show average basecurve', value=True)
 show_aces_srgb = st.sidebar.checkbox('Show ACES sRGB 100 nits', value=True)
@@ -106,6 +113,14 @@ plt.plot(filmic.toe_log, filmic.toe_display, 'o')
 plt.plot(filmic.grey_log, filmic.display_grey_gamma, 'o')
 plt.plot(filmic.shoulder_log, filmic.shoulder_display, 'o')
 plt.plot(1.0, filmic.display_white_gamma, 'o')
+
+if double_logistic.enable:
+    double_logistic_value = double_logistic.apply(intensity_x_axis)
+    if view_mode == "Log2Log2":
+        double_logistic_value = np.log2(double_logistic_value + log_epsilon)
+    double_logistic_slope = derivative(dydx_x_axis, double_logistic_value)
+    value_plot["DoubleLogistic"] = double_logistic_value
+    slope_plot["DoubleLogistic"] = double_logistic_slope
 
 # Add Base Average Base Curve if requested
 @st.cache
