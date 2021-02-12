@@ -10,8 +10,8 @@ class LogLogistic(object):
         self.skew = 0.0
 
     def __settings(self):
-        self.power = self.contrast
         self.skew_power = pow(5.0, -self.skew)
+        self.power = pow(self.contrast, 1.0 / self.skew_power)
 
         self.magnitude = self.display_white
         T = pow(self.display_white / self.display_grey, 1.0 / self.skew_power) - 1.0
