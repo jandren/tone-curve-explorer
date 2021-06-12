@@ -51,7 +51,9 @@ class LogLogistic(object):
         self.paper_e = pow(self.fog + self.scene_grey, self.film_power) * T
 
     def __evaluate(self, x):
-        return self.magnitude * pow(1.0 + self.paper_e * pow(self.fog + x, -self.film_power), -self.paper_power)
+        #return self.magnitude * pow(1.0 + self.paper_e * pow(self.fog + x, -self.film_power), -self.paper_power)
+        film = pow(self.fog + x, self.film_power)
+        return self.magnitude * pow(film / (self.paper_e + film), self.paper_power)
 
     def apply(self, x):
         self.find_film_power()
