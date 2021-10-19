@@ -15,7 +15,7 @@ else:
 view_resolution = st.sidebar.slider('View Resolution', min_value=100, max_value=10000,value=400)
 
 st.sidebar.header("Display Settings")
-display_black = st.sidebar.slider("Target Black Luminance", 0.0, 0.18, 0.0)
+display_black = pow(2.0, st.sidebar.slider("Target Black Luminance", -16.0, -5.0, -11.0))
 display_white = st.sidebar.slider("Target White Luminance", 0.2, 16.0, 1.0)
 
 st.sidebar.header("Log-Logistic Settings")
@@ -55,10 +55,11 @@ if double_logistic.enable:
     double_logistic.L = st.sidebar.slider("L", 0.0, 2.0, 0.1845)
     double_logistic.c = st.sidebar.slider("c", 1.0, 10.0, 2.0)
 
-# Ask if Base Curve should be displayed
+# Ask if other curves should be displayed
 show_base_curve = st.sidebar.checkbox('Show average basecurve', value=True)
 show_aces_srgb = st.sidebar.checkbox('Show ACES sRGB 100 nits', value=True)
 show_aces_hlg = st.sidebar.checkbox('Show ACES HLG 1000 nits', value=False)
+show_analog_print = st.sidebar.checkbox('Show Analog Print', value=True)
 blender_names = ['None', 'Very Low Contrast', 'Low Contrast', 'Medium Low Contrast', "Medium Contrast", "Medium High Contrast", "High Contrast", "Very High Contrast"]
 show_blender_filmic = st.sidebar.selectbox("Show Blender Filmic Curve", blender_names)
 
@@ -162,6 +163,18 @@ if show_aces_hlg:
     aces_hlg_slope = derivative(dydx_x_axis, aces_hlg_display)
     value_plot["ACES HLG"] = aces_hlg_display
     slope_plot["ACES HLG"] = aces_hlg_slope
+
+# Add aces curve if requested
+if show_analog_print:
+    analog = tonecurves.AnalogFilm()
+
+if show_analog_print:
+    analog_print_display = analog.apply_print(intensity_x_axis)
+    if view_mode == "Log2Log2":
+        analog_print_display = np.log2(analog_print_display + log_epsilon)
+    analog_print_slope = derivative(dydx_x_axis, analog_print_display)
+    value_plot["Analog Print"] = analog_print_display
+    slope_plot["Analog Print"] = analog_print_slope
 
 # Add Blender filmic curve if requested
 @st.cache
