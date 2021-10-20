@@ -60,6 +60,7 @@ show_base_curve = st.sidebar.checkbox('Show average basecurve', value=False)
 show_aces_srgb = st.sidebar.checkbox('Show ACES sRGB 100 nits', value=False)
 show_aces_hlg = st.sidebar.checkbox('Show ACES HLG 1000 nits', value=False)
 show_analog_print = st.sidebar.checkbox('Show Analog Print', value=True)
+show_analog_negative = st.sidebar.checkbox('Show inverted Analog Negative', value=False)
 blender_names = ['None', 'Very Low Contrast', 'Low Contrast', 'Medium Low Contrast', "Medium Contrast", "Medium High Contrast", "High Contrast", "Very High Contrast"]
 show_blender_filmic = st.sidebar.selectbox("Show Blender Filmic Curve", blender_names)
 
@@ -165,7 +166,7 @@ if show_aces_hlg:
     slope_plot["ACES HLG"] = aces_hlg_slope
 
 # Add aces curve if requested
-if show_analog_print:
+if show_analog_print or show_analog_negative:
     analog = tonecurves.AnalogFilm()
 
 if show_analog_print:
@@ -175,6 +176,14 @@ if show_analog_print:
     analog_print_slope = derivative(dydx_x_axis, analog_print_display)
     value_plot["Analog Print"] = analog_print_display
     slope_plot["Analog Print"] = analog_print_slope
+
+if show_analog_negative:
+    analog_negative_display = analog.apply_negative(intensity_x_axis)
+    if view_mode == "Log2Log2":
+        analog_negative_display = np.log2(analog_negative_display + log_epsilon)
+    analog_negative_slope = derivative(dydx_x_axis, analog_negative_display)
+    value_plot["Analog Negative"] = analog_negative_display
+    slope_plot["Analog Negative"] = analog_negative_slope
 
 # Add Blender filmic curve if requested
 @st.cache
