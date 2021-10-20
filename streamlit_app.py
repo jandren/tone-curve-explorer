@@ -6,16 +6,16 @@ import tonecurves
 
 ### Sidebar stuff
 st.sidebar.header("Scene Settings")
-view_range = st.sidebar.slider('View Range', min_value=-16.0, max_value=16.0,value=[-8.0, 5.0])
+view_range = st.sidebar.slider('View Range', min_value=-16.0, max_value=16.0,value=[-6.0, 6.0])
 view_mode = st.sidebar.selectbox('View Scaling', ["EV (log2)", "Linear", "Log2Log2"])
 if not view_mode == "Log2Log2":
-    view_dydx_mode = st.sidebar.selectbox('Slope Base', ["Linear", "EV (log2)"])
+    view_dydx_mode = st.sidebar.selectbox('Slope Base', ["EV (log2)", "Linear"])
 else:
     view_dydx_mode = "EV (log2)"
 view_resolution = st.sidebar.slider('View Resolution', min_value=100, max_value=10000,value=400)
 
 st.sidebar.header("Display Settings")
-display_black = pow(2.0, st.sidebar.slider("Target Black Luminance", -16.0, -5.0, -11.0))
+display_black = pow(2.0, st.sidebar.slider("Target Black Luminance", -16.0, -5.0, -13.0))
 display_white = st.sidebar.slider("Target White Luminance", 0.2, 16.0, 1.0)
 
 st.sidebar.header("Log-Logistic Settings")
@@ -23,7 +23,7 @@ loglogistic = tonecurves.LogLogistic()
 loglogistic.enable = st.sidebar.checkbox('Show Log-Logistic', value=True)
 if loglogistic.enable:
     loglogistic.contrast = st.sidebar.slider("Contrast", 0.5, 5.0, loglogistic.contrast)
-    loglogistic.skew = st.sidebar.slider("Skew", -1.0, 1.0, loglogistic.skew)
+    loglogistic.skew = st.sidebar.slider("Skew", -2.0, 1.0, loglogistic.skew)
     loglogistic.display_white = display_white
     loglogistic.display_black = display_black
 
@@ -56,8 +56,8 @@ if double_logistic.enable:
     double_logistic.c = st.sidebar.slider("c", 1.0, 10.0, 2.0)
 
 # Ask if other curves should be displayed
-show_base_curve = st.sidebar.checkbox('Show average basecurve', value=True)
-show_aces_srgb = st.sidebar.checkbox('Show ACES sRGB 100 nits', value=True)
+show_base_curve = st.sidebar.checkbox('Show average basecurve', value=False)
+show_aces_srgb = st.sidebar.checkbox('Show ACES sRGB 100 nits', value=False)
 show_aces_hlg = st.sidebar.checkbox('Show ACES HLG 1000 nits', value=False)
 show_analog_print = st.sidebar.checkbox('Show Analog Print', value=True)
 blender_names = ['None', 'Very Low Contrast', 'Low Contrast', 'Medium Low Contrast', "Medium Contrast", "Medium High Contrast", "High Contrast", "Very High Contrast"]
@@ -104,13 +104,13 @@ if filmic.enable:
     if view_mode == "Log2Log2":
         filmic_value = np.log2(filmic_value + log_epsilon)
     filmic_slope = derivative(dydx_x_axis, filmic_value)
-    value_plot["Filmic"] = filmic_value
-    slope_plot["Filmic"] = filmic_slope
+    value_plot["darktable Filmic"] = filmic_value
+    slope_plot["darktable Filmic"] = filmic_slope
 
     # For the filmic default view
     norm_x, pregamma_y = filmic.get_default_view(view_resolution)
     filmic_plot = pd.DataFrame(index=norm_x)
-    filmic_plot["Filmic"] = pregamma_y
+    filmic_plot["darktable Filmic"] = pregamma_y
 
     darktable_filmic_fig = plt.figure("Filmic in darktable")
     plt.plot(norm_x, pregamma_y)
@@ -210,7 +210,8 @@ The Log-Logistic curve is modified to fulfill the following conditions:
 * f(0) = Target Black Luminance
 * f(0.1845) = 0.1845
 * f(inf) = Target White Luminance
-* The contrast setting is the power of the function.  
+* The contrast setting is the power of the function.
+* Skew works pushes the peak contrast towards shadows or highlights, the slope at middle grey remains constant.
 
 The filmic settings are the same as in darktable 3.4, please check out available documentation for more info.
 """)
@@ -228,36 +229,37 @@ st.line_chart(value_plot)
 st.header("Slope Graph")
 st.line_chart(slope_plot)
 st.write("""
-In my eyes the slope graph is the most interesting. It shows the derivative (dy/dx) of the value plot with dx always linear.
-The best way to describe the visual impact of the slope is image contrast. A different name for the graph could be Contrast Graph.
+In my eyes the slope graph is more interesting than the value graph. It shows the derivative (dy/dx) of the value plot with dx selectable as log2 or linear.
+The best way to describe the visual impact of the slope is image contrast, higher slope means higher contrast. A different name for this graph could be Contrast Graph.
 
 What to look for:
 * Number of peaks, a good curve will have only one peak (I do not have any references for this yet but I'm feeling reasonably certain about this).
-* Position of the maximum of the slope, the maximum of the slope graph is also luminance level which will get the highest contrast.
-* Tails, we want a smooth convergence towards display black and display white. Longer tails will yield smoother but duller transitions.
-* Negative values! A no, no, no! These curves has to always be positive for correct results.
+* Position of the maximum of the slope, the maximum of the slope graph is also the luminance level at which the highest image contrast will be.
+* Tails, we want a smooth convergence towards display black and display white. Longer tails will yield smoother but potentially duller transitions.
+* Negative values! A no, no, no! These curves has to always be positive as these transfer curves are supposed to be monotonic.
 * When does the slope reach zero? These points marks the dynamic range of that particular curve.
 """)
 
-st.header("About the Filmic curve")
-st.subheader("Why does it look different from the darktable plot?")
-st.write("""The default view of the filmic curve in darktable looks different to this but
-is very useful for finding a suitable curve. It does however hide the actual effect of changing
-black and white point as well as what the hardness factor does to the end result.
-I found the hardness factor particulary hard to understand. It seems to act like
-a way of normalizer of middle grey which is a crucial part of expanding the space of usable splines.
-The default darktable view is shown below for reference. Note that this view is on a normalized x axis
-mapping [black_point, white_point] -> [0, 1] and the y axis is shown as before the gamma curve is applied.""")
-
 if filmic.enable:
-    st.pyplot(darktable_filmic_fig)
-st.subheader("Disclaimers")
-st.write("""
-The Filmic curve implementation is based on the documentation provided here:
-https://eng.aurelienpierre.com/2018/11/filmic-darktable-and-the-quest-of-the-hdr-tone-mapping/#filmic_s_curve
-and porting of the darktable C-code. Errors might have been made, I appoligize for that in advance.
+    st.header("About the Filmic curve")
+    st.subheader("Why does it look different from the darktable plot?")
+    st.write("""The default view of the filmic curve in darktable looks different to this but
+    is very useful for finding a suitable curve. It does however hide the actual effect of changing
+    black and white point as well as what the hardness factor does to the end result.
+    I found the hardness factor particulary hard to understand. It seems to act like
+    a normalizer for the middle grey point which is a crucial part of expanding the space of usable splines.
+    The default darktable view is shown below for reference. Note that this view is on a normalized x axis
+    mapping [black_point, white_point] -> [0, 1] and the y axis is shown as before the hardness function is applied.""")
 
-The following modification have been done to make it behave like the other options:
-The output clamp before applying the hardness/gamma power function has been removed.
-It would not be possible to reach values larger than 1.0 otherwise.
-""")
+
+    st.pyplot(darktable_filmic_fig)
+    st.subheader("Disclaimer on the filmic curve")
+    st.write("""
+    The Filmic curve implementation is based on the documentation provided here:
+    https://eng.aurelienpierre.com/2018/11/filmic-darktable-and-the-quest-of-the-hdr-tone-mapping/#filmic_s_curve
+    and porting of the darktable C-code. Errors might have been made, I appoligize for that in advance.
+
+    The following modification have been done to make it behave like the other options:
+    The output clamp before applying the hardness/gamma power function has been removed.
+    It would not be possible to reach values larger than 1.0 otherwise.
+    """)

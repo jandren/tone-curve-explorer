@@ -6,8 +6,8 @@ class LogLogistic(object):
         self.display_black = 0.0
         self.display_grey = 0.1845
         self.display_white = 1.0
-        self.contrast = 1.65
-        self.skew = 0.0
+        self.contrast = 2.01
+        self.skew = -0.61
     
     def find_film_power(self):
         # Actual wanted slope should be the same as for without skew
